@@ -49,8 +49,7 @@ class Doudizhu:
     def qiangdizhu(self):
         n = random.randint(0, 2)
         self.dizhu = n
-        print
-        "玩家" + str(n) + "叫地主"
+        print("玩家" + str(n) + "叫地主")
         if n == 0:
             self.str1 += self.str4
         if n == 1:
@@ -159,14 +158,14 @@ class Doudizhu:
                             ones.append(poker2)
                         elif dic[poker2] == 2:
                             pairs.append(poker2)
-                    for i in xrange(len(ones)):
-                        for j in xrange(i + 1, len(ones)):
+                    for i in range(len(ones)):
+                        for j in range(i + 1, len(ones)):
                             combs.append({'type': COMB_TYPE.FOURTH_TWO_ONES, 'name': 'FORTH_TWO_ONES', 'main': poker,
                                           'sub1': ones[i], 'sub2': ones[j]})
-                    for i in xrange(len(pairs)):
+                    for i in range(len(pairs)):
                         combs.append({'type': COMB_TYPE.FOURTH_TWO_ONES, 'name': 'FORTH_TOW_ONES', 'main': poker,
                                       'sub1': pairs[i], 'sub2': pairs[i]})
-                        for j in xrange(i + 1, len(pairs)):
+                        for j in range(i + 1, len(pairs)):
                             combs.append({'type': COMB_TYPE.FOURTH_TWO_PAIRS, 'name': 'FOURTH_TWO_PAIRS', 'main': poker,
                                           'sub1': pairs[i], 'sub2': pairs[j]})
 
@@ -237,7 +236,7 @@ class Doudizhu:
             poker_clone.remove(hand['sub2'])
             poker_clone.remove(hand['sub2'])
         elif hand['type'] == COMB_TYPE.STRIGHT:
-            for i in xrange(hand['sub'], hand['sub'] - hand['main'], -1):
+            for i in range(hand['sub'], hand['sub'] - hand['main'], -1):
                 poker_clone.remove(i)
         elif hand['type'] == COMB_TYPE.BOMB:
             poker_clone.remove(hand['main'])
@@ -375,25 +374,20 @@ class Doudizhu:
                     handout = hand
 
                     # 打印出牌日志
-        print
-        "\r\n出牌次序:", handout_seq
+        print("\r\n出牌次序:", handout_seq)
         user = '农民'
         if cur_player == self.dizhu:
             user = '地主'
 
-        print
-        str(user) + "[" + str(cur_player) + "]剩余牌: ", ', '.join(
-            [self.poker_mapping[str(x)] for x in self.users[cur_player]])
-        print
-        str(user) + "[" + str(cur_player) + "]出牌:    " + self.print_hand(handout)
+        print(str(user) + "[" + str(cur_player) + "]剩余牌: ", ', '.join([self.poker_mapping[str(x)] for x in self.users[cur_player]]))
+        print(str(user) + "[" + str(cur_player) + "]出牌:    " + self.print_hand(handout))
         # 出牌后剔除已出的牌
         self.users[cur_player] = self.make_hand(self.users[cur_player], handout)
 
         # 如果剔除完成后，当前玩家手中无牌，则宣布胜利
         if (len(self.users[cur_player]) == 0):
             self.is_end = 'Y'
-            print
-            str(user) + "[" + str(cur_player) + "] 胜利！"
+            print(str(user) + "[" + str(cur_player) + "] 胜利！")
 
         return handout
 

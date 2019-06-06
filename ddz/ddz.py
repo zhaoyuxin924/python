@@ -4,13 +4,13 @@ import sys
 from socket import *
 
 #定义连接
-socket_user1 = socket(AF_INET,SOCK_STREAM)
-socket_user2 = socket(AF_INET,SOCK_STREAM)
-socket_user3 = socket(AF_INET,SOCK_STREAM)
-
-socket_user1.connect(("127.0.0.1",10001))
-socket_user2.connect(("127.0.0.1",10002))
-socket_user3.connect(("127.0.0.1",10003))
+# socket_user1 = socket(AF_INET,SOCK_STREAM)
+# socket_user2 = socket(AF_INET,SOCK_STREAM)
+# socket_user3 = socket(AF_INET,SOCK_STREAM)
+#
+# socket_user1.connect(("127.0.0.1",10001))
+# socket_user2.connect(("127.0.0.1",10002))
+# socket_user3.connect(("127.0.0.1",10003))
 
 
 # 配置出牌规则
@@ -49,12 +49,21 @@ class ddz:
         self.str2 = self.a[1:-3:3]
         self.str3 = self.a[2:-3:3]
         self.str4 = self.a[-3:]
+    def qiangdizhu(self):
+        n = random.randint(0, 2)
+        self.dizhu = n
+        print("玩家" + str(n) + "叫地主")
+        if n == 0:
+            self.str1 += self.str4
+        if n == 1:
+            self.str2 += self.str4
+        if n == 2:
+            self.str3 += self.str4
     # 对牌进行升序排序，方便计算出牌的排列组合
     def mapai(self):
         self.str1.sort()
         self.str2.sort()
         self.str3.sort()
-
     def yingshe(self):
         paizd = [(0, '3'), (1, '3'), (2, '3'), (3, '3'),
                  (4, '4'), (5, '4'), (6, '4'), (7, '4'),
@@ -72,26 +81,102 @@ class ddz:
                  (52, '16'), (53, '17')]
 
         zdpai = dict(paizd)
-        paistr1 = ''
+        paistr1 = []
         for i in range(len(self.str1)):
-            paistr1 += zdpai[self.str1[i]] + ' '
-        paistr2 = ''
+            paistr1.append(int(zdpai[self.str1[i]]))
+        paistr2 = []
         for i in range(len(self.str2)):
-            paistr2 += zdpai[self.str2[i]] + ' '
-        paistr3 = ''
+            paistr2.append(int(zdpai[self.str2[i]]))
+        paistr3 = []
         for i in range(len(self.str3)):
-            paistr3 += zdpai[self.str3[i]] + ' '
-        dipai = ''
-        for i in range(len(self.str4)):
-            dipai += zdpai[self.str4[i]]
-        return paistr1,paistr2,paistr3,dipai
-if __name__ == '__main__':
+            paistr3.append(int(zdpai[self.str3[i]]))
+        return paistr1,paistr2,paistr3
+    #定义可以出的牌型
+    def get_all_hands(self, pokers):
+        if not pokers:
+            return []
+
+        combs = [{'type': COMB_TYPE.PASS, 'name': 'PASS'}]
+        dic = {}
+        for poker in pokers:
+            dic[poker] = dic.get(poker, 0) + 1
+
+        for poker in dic:
+            if dic[poker] >= 1:
+                # SINGLE
+                combs.append({'type': COMB_TYPE.SINGLE, 'name': 'SINGLE', 'main': poker})
+            if dic[poker] >= 2:
+                # PAIR
+                combs.append({'type': COMB_TYPE.PAIR, 'name': 'PAIR', 'main': poker})
+            if dic[poker] >= 3:
+                # TRIPLEs
+                combs.append({'type': COMB_TYPE.TRIPLE, 'name': 'TRIPLE', 'main': poker})
+                for poker2 in dic:
+                    if ALLOW_THREE_ONE and dic[poker2] >= 1 and poker2 != poker and poker2 != 16 and poker2 != 17:
+                        # TRIPLE_ONE
+                        combs.append({'type': COMB_TYPE.TRIPLE_ONE, 'name': 'TRIPLE_ONE', 'main': poker, 'sub': poker2})
+                    if ALLOW_THREE_TWO and dic[poker2] >= 2 and poker2 != poker:
+                        # TRIPLE_TWO
+                        combs.append({'type': COMB_TYPE.TRIPLE_TWO, 'name': 'TRIPLE_TWO', 'main': poker, 'sub': poker2})
+
+            if dic[poker] == 4:
+                # BOMB
+                combs.append({'type': COMB_TYPE.BOMB, 'name': 'BOMB', 'main': poker})
+                if ALLOW_FOUR_TWO:
+                    pairs = []
+                    ones = []
+                    for poker2 in dic:
+                        if dic[poker2] == 1:
+                            ones.append(poker2)
+                        elif dic[poker2] == 2:
+                            pairs.append(poker2)
+                    for i in range(len(ones)):
+                        for j in range(i + 1, len(ones)):
+                            combs.append({'type': COMB_TYPE.FOURTH_TWO_ONES, 'name': 'FORTH_TWO_ONES', 'main': poker,
+                                          'sub1': ones[i], 'sub2': ones[j]})
+                    for i in range(len(pairs)):
+                        combs.append({'type': COMB_TYPE.FOURTH_TWO_ONES, 'name': 'FORTH_TOW_ONES', 'main': poker,
+                                      'sub1': pairs[i], 'sub2': pairs[i]})
+                        for j in range(i + 1, len(pairs)):
+                            combs.append({'type': COMB_TYPE.FOURTH_TWO_PAIRS, 'name': 'FOURTH_TWO_PAIRS', 'main': poker,
+                                          'sub1': pairs[i], 'sub2': pairs[j]})
+
+        if 16 in pokers and 17 in pokers:
+            # KING_PAIR
+            combs.append({'type': COMB_TYPE.KING_PAIR, 'name': 'KING_PAIR'})
+
+        # STRIGHT
+        distincted_sorted_pokers = list(set(pokers))
+        lastPoker = distincted_sorted_pokers[0]
+        sequence_num = 1
+        i = 1
+        while i < len(distincted_sorted_pokers):
+            # Only 3-A Can be STRIGHT
+            if distincted_sorted_pokers[i] <= 14 and distincted_sorted_pokers[i] - lastPoker == 1:
+                sequence_num += 1
+                if sequence_num >= 5:
+                    j = 0
+                    while sequence_num - j >= 5:
+                        # STRIGHT
+                        combs.append({'type': COMB_TYPE.STRIGHT, 'name': 'STRIGHT', 'main': sequence_num - j,
+                                      'sub': distincted_sorted_pokers[i]})
+                        j += 1
+            else:
+                sequence_num = 1
+            lastPoker = distincted_sorted_pokers[i]
+            i += 1
+        return combs
+def main():
     dd = ddz()
     dd.xipai()
     dd.fapai()
+    dd.qiangdizhu()
     dd.mapai()
-    user1_pai,user2_pai,user3_pai,dipai = dd.yingshe()
-    socket_user1.send(user1_pai.encode('utf-8'))
-    socket_user2.send(user2_pai.encode('utf-8'))
-    socket_user3.send(user3_pai.encode('utf-8'))
+    user1_pai,user2_pai,user3_pai = dd.yingshe()
+    action = dd.get_all_hands(user1_pai)
+    print(action)
+
+if __name__ == '__main__':
+    main()
+
 
