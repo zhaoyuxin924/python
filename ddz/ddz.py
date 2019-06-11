@@ -103,24 +103,24 @@ class ddz:
 
         for poker in dic:
             if dic[poker] >= 1:
-                # SINGLE
+                # 单排
                 combs.append({'type': COMB_TYPE.SINGLE, 'name': 'SINGLE', 'main': poker})
             if dic[poker] >= 2:
-                # PAIR
+                # 对子
                 combs.append({'type': COMB_TYPE.PAIR, 'name': 'PAIR', 'main': poker})
             if dic[poker] >= 3:
-                # TRIPLEs
+                # 三张
                 combs.append({'type': COMB_TYPE.TRIPLE, 'name': 'TRIPLE', 'main': poker})
                 for poker2 in dic:
                     if ALLOW_THREE_ONE and dic[poker2] >= 1 and poker2 != poker and poker2 != 16 and poker2 != 17:
-                        # TRIPLE_ONE
+                        # 三带一
                         combs.append({'type': COMB_TYPE.TRIPLE_ONE, 'name': 'TRIPLE_ONE', 'main': poker, 'sub': poker2})
                     if ALLOW_THREE_TWO and dic[poker2] >= 2 and poker2 != poker:
-                        # TRIPLE_TWO
+                        # 三带二
                         combs.append({'type': COMB_TYPE.TRIPLE_TWO, 'name': 'TRIPLE_TWO', 'main': poker, 'sub': poker2})
 
             if dic[poker] == 4:
-                # BOMB
+                # 炸弹
                 combs.append({'type': COMB_TYPE.BOMB, 'name': 'BOMB', 'main': poker})
                 if ALLOW_FOUR_TWO:
                     pairs = []
@@ -142,22 +142,21 @@ class ddz:
                                           'sub1': pairs[i], 'sub2': pairs[j]})
 
         if 16 in pokers and 17 in pokers:
-            # KING_PAIR
+            # 王炸
             combs.append({'type': COMB_TYPE.KING_PAIR, 'name': 'KING_PAIR'})
 
-        # STRIGHT
+        # 顺子
         distincted_sorted_pokers = list(set(pokers))
         lastPoker = distincted_sorted_pokers[0]
         sequence_num = 1
         i = 1
         while i < len(distincted_sorted_pokers):
-            # Only 3-A Can be STRIGHT
+            # 顺子只能到A
             if distincted_sorted_pokers[i] <= 14 and distincted_sorted_pokers[i] - lastPoker == 1:
                 sequence_num += 1
                 if sequence_num >= 5:
                     j = 0
                     while sequence_num - j >= 5:
-                        # STRIGHT
                         combs.append({'type': COMB_TYPE.STRIGHT, 'name': 'STRIGHT', 'main': sequence_num - j,
                                       'sub': distincted_sorted_pokers[i]})
                         j += 1
@@ -173,8 +172,8 @@ def main():
     dd.qiangdizhu()
     dd.mapai()
     user1_pai,user2_pai,user3_pai = dd.yingshe()
-    action = dd.get_all_hands(user1_pai)
-    print(action)
+    while True:
+        action = dd.get_all_hands(user1_pai)
 
 if __name__ == '__main__':
     main()
