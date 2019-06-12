@@ -16,14 +16,14 @@ def conv2d(x, W, stride):
 def max_pool_2x2(x):
     return tf.nn.max_pool(x, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = "SAME")
 def createNetwork():
-    W_conv1 = weight_variable([8, 8, 21, 32])
+    W_conv1 = weight_variable([4, 4, 21, 32])
     b_conv1 = bias_variable([32])
 
-    W_conv2 = weight_variable([4, 4, 32, 64])
+    W_conv2 = weight_variable([3, 3, 32, 64])
     b_conv2 = bias_variable([64])
 
-    W_conv3 = weight_variable([3, 3, 64, 64])
-    b_conv3 = bias_variable([64])
+    W_conv3 = weight_variable([2, 2, 64, 128])
+    b_conv3 = bias_variable([128])
 
     W_fc1 = weight_variable([1600, 512])
     b_fc1 = bias_variable([512])
@@ -48,6 +48,3 @@ def createNetwork():
     readout = tf.matmul(h_fc1, W_fc2) + b_fc2
 
     return s, readout, h_fc1
-
-a = tf.zeros((15,19,21))
-print(a)

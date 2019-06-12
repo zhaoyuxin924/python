@@ -24,7 +24,7 @@ class Doudizhu:
                   36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53]
 
         self.poker_mapping = {'1': '1', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6', '7': '7', '8': '8', '9': '9'
-            , '10': '10', '11': 'J', '12': 'Q', '13': 'K', '14': 'A', '15': '2', '16': u'小王', '17': u'大王'}
+            , '10': 'T', '11': 'J', '12': 'Q', '13': 'K', '14': 'A', '15': '2', '16': u'S', '17': u'B'}
         # 本局玩家持有牌数组[[],[],[]]
         self.users = []
         # 历史出牌的内容
@@ -47,15 +47,8 @@ class Doudizhu:
 
     # 随机指定一个地主
     def qiangdizhu(self):
-        n = random.randint(0, 2)
-        self.dizhu = n
-        print("玩家" + str(n) + "叫地主")
-        if n == 0:
-            self.str1 += self.str4
-        if n == 1:
-            self.str2 += self.str4
-        if n == 2:
-            self.str3 += self.str4
+        self.dizhu = 0
+        self.str1 += self.str4
 
     # 对牌进行升序排序，方便计算出牌的排列组合
     def mapai(self):
@@ -321,34 +314,37 @@ class Doudizhu:
         elif the_kingpair is not None:
             return the_kingpair
         else:
-            print
-            'Unknown type'
+            # print('Unknown type')
             return all_hands[0]
 
     def print_hand(self, hand):
         if hand['name'] == 'STRIGHT':
-            return "顺子：" + self.poker_mapping[str(int(hand['sub']) - int(hand['main']) + 1)] + "--" + \
-                   self.poker_mapping[str(int(hand['sub']))]
+            shun = ""
+            for i in range(int(hand['main'])):
+                shun += self.poker_mapping[str(int(hand['sub']) - int(hand['main']) + 1 + i)]
+            return shun
+            # return "顺子" + self.poker_mapping[str(int(hand['sub']) - int(hand['main']) + 1)] + "--" + \
+            #        self.poker_mapping[str(int(hand['sub']))]
         if hand['name'] == 'TRIPLE_ONE':
-            return "三带一: " + self.poker_mapping[str(hand['main'])] + "*3," + self.poker_mapping[str(hand['sub'])]
+            return  self.poker_mapping[str(hand['main'])] * 3 + self.poker_mapping[str(hand['sub'])]
         if hand['name'] == 'TRIPLE_TWO':
-            return "三带一对: " + self.poker_mapping[str(hand['main'])] + "*3," + self.poker_mapping[
-                str(hand['sub'])] + "*2"
+            return self.poker_mapping[str(hand['main'])] * 3 + self.poker_mapping[
+                str(hand['sub'])] * 2
         if hand['name'] == 'TRIPLE':
-            return "三张: " + self.poker_mapping[str(hand['main'])] + "*3"
+            return self.poker_mapping[str(hand['main'])] * 3
         if hand['name'] == 'PASS':
-            return "过"
+            return ""
         if hand['name'] == 'PAIR':
-            return "对子： " + self.poker_mapping[str(hand['main'])] + "*2"
+            return self.poker_mapping[str(hand['main'])] * 2
         if hand['name'] == 'BOMB':
-            return "炸弹: " + self.poker_mapping[str(hand['main'])] + "*4"
+            return self.poker_mapping[str(hand['main'])] * 4
         if hand['name'] == 'KING_PAIR':
-            return "王炸"
+            return "SB"
         if hand['name'] == 'SINGLE':
-            return "单牌: " + self.poker_mapping[str(hand['main'])]
+            return self.poker_mapping[str(hand['main'])]
 
     # 依据上游历史出牌的内容，决定本次出牌的内容
-    def hand_out(self, last_handout, handout_seq):
+    def hand_out(self, last_handout, handout_seq,f):
         cur_player = (self.dizhu + handout_seq) % 3
         all_hands = self.get_all_hands(self.users[cur_player])
 
@@ -374,25 +370,27 @@ class Doudizhu:
                     handout = hand
 
                     # 打印出牌日志
-        print("\r\n出牌次序:", handout_seq)
+        # print("\r\n出牌次序:", handout_seq)
         user = '农民'
         if cur_player == self.dizhu:
             user = '地主'
 
-        print(str(user) + "[" + str(cur_player) + "]剩余牌: ", ', '.join([self.poker_mapping[str(x)] for x in self.users[cur_player]]))
-        print(str(user) + "[" + str(cur_player) + "]出牌:    " + self.print_hand(handout))
+        # print(str(user) + "[" + str(cur_player) + "]剩余牌: ", ', '.join([self.poker_mapping[str(x)] for x in self.users[cur_player]]))
+        if self.print_hand(handout) != "":
+            a = str(cur_player) + "," + self.print_hand(handout) + ";"
+            f.write(a)
         # 出牌后剔除已出的牌
         self.users[cur_player] = self.make_hand(self.users[cur_player], handout)
 
         # 如果剔除完成后，当前玩家手中无牌，则宣布胜利
         if (len(self.users[cur_player]) == 0):
             self.is_end = 'Y'
-            print(str(user) + "[" + str(cur_player) + "] 胜利！")
+            f.write("\n")
 
         return handout
 
     # 开始打牌
-    def start(self):
+    def start(self,f):
         self.xipai()
         self.fapai()
         self.qiangdizhu()
@@ -407,12 +405,13 @@ class Doudizhu:
             else:
                 last_handout = self.handout_hist[handout_seq - 1]
 
-            current_handout = self.hand_out(last_handout, handout_seq)
+            current_handout = self.hand_out(last_handout, handout_seq,f)
             self.handout_hist.append(current_handout)
             handout_seq += 1
 
-
-game = Doudizhu()
-game.start()
+with open("./jilu.txt","+a") as f:
+    for i in range(1000000):
+        game = Doudizhu()
+        game.start(f)
 
 
